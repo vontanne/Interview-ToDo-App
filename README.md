@@ -47,64 +47,68 @@ Ensure you have the following tools installed:
 ### Installation
 
 1. Clone the repository:
-   ```bash
-   git clone <REPO_URL>
+```bash
+git clone https://github.com/rafayeljamalyandev/Interview-ToDo-App.git
+```
 
-	2.	Install dependencies:
-
+2.	Install dependencies:
+```bash
 npm install
+```
 
-
-	3.	Set up the .env file:
-
+3.	Set up the .env file:
+```bash
 DATABASE_URL="mysql://root:password@localhost:3306/todoapp"
 JWT_SECRET="some_secret_key"
+```
 
+4.	Apply Prisma migrations:
 
-	4.	Apply Prisma migrations:
-
+```bash
 npx prisma migrate dev
+```
 
 
-	5.	Start the application:
-
+5.	Start the application:
+```bash
 npm run start:dev
+```
 
-Submission Format
+## Submission Format
 
-	1.	Create a Fork
-	•	Fork this repository to your personal GitHub account.
-	2.	Create a Feature Branch
-	•	Create a new branch for your work:
+1.	Create a Fork
+•	Fork this repository to your personal GitHub account.
+2.	Create a Feature Branch
+•	Create a new branch for your work:
 
+```bash
 git checkout -b candidate-improvements
+```
 
+3.	Make Changes
+  •	Commit your improvements and push them to your branch.
+4.	Open a Merge Request (MR)
+  •	Submit a pull request (PR) from your feature branch to the main branch of this repository.
+5.	Provide a Summary
+  •	In your MR description, include:
+  •	A brief overview of the changes.
+  •	Key improvements and fixes.
+  •	Instructions for testing your changes.
 
-	3.	Make Changes
-	•	Commit your improvements and push them to your branch.
-	4.	Open a Merge Request (MR)
-	•	Submit a pull request (PR) from your feature branch to the main branch of this repository.
-	5.	Provide a Summary
-	•	In your MR description, include:
-	•	A brief overview of the changes.
-	•	Key improvements and fixes.
-	•	Instructions for testing your changes.
-
-Evaluation Criteria
+## Evaluation Criteria
 
 Your submission will be evaluated based on the following:
-	1.	Code quality and readability.
-	2.	Adherence to best practices.
-	3.	Error handling and edge case management.
-	4.	Test coverage and quality of tests.
-	5.	Proper use of Prisma and database handling.
-	6.	Documentation and clarity of instructions.
+1.	Code quality and readability.
+2.	Adherence to best practices.
+3.	Error handling and edge case management.
+4.	Test coverage and quality of tests.
+5.	Proper use of Prisma and database handling.
+6.	Documentation and clarity of instructions.
 
 Tips
-
-	•	Focus on making the code modular and maintainable.
-	•	Write meaningful commit messages.
-	•	Don’t overcomplicate — aim for clarity and maintainability.
+•	Focus on making the code modular and maintainable.
+•	Write meaningful commit messages.
+•	Don’t overcomplicate — aim for clarity and maintainability.
 
 Good luck! 🚀
 
