@@ -1,0 +1,9 @@
+export const AUTH_CONFIG = Object.freeze({
+  SALT: parseInt(process.env.SALT) || 10,
+  ACCESS_TOKEN_SECRET:
+    process.env.ACCESS_TOKEN_SECRET || '5d45c0bf203727cda90c10cfe9655564',
+  ACCESS_TOKEN_EXPIRATION: '15m',
+  REFRESH_TOKEN_SECRET:
+    process.env.REFRESH_TOKEN_SECRET || 'e3be4733291400949bfa73295ab1793e',
+  REFRESH_TOKEN_EXPIRATION: '1d',
+});
