@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { Response } from 'express';
+import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { AuthDto } from './dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { AUTH_CONFIG } from '../../configs/jwt.config';
 import { UserService } from '../user/user.service';
+import { UserPayload } from 'src/types/user-payload.type';
 
 @Injectable()
 export class AuthService {
@@ -53,6 +54,55 @@ export class AuthService {
     });
 
     return res.json({ accessToken, user });
+  }
+
+  async logout(user: UserPayload, res: Response) {
+    try {
+      await this.userService.updateUserRefreshToken(user.id, null);
+      res.clearCookie('jwt');
+      return res.status(HttpStatus.OK).json({ message: 'Sign-out successful' });
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'An error occurred during logout. Please try again later.',
+      });
+    }
+  }
+
+  async refreshAccessToken(req: Request, res: Response) {
+    const refreshToken = req.cookies['jwt'];
+    const { REFRESH_TOKEN_SECRET } = AUTH_CONFIG;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    try {
+      const decoded = this.jwtService.verify(refreshToken, {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+      });
+
+      const user = await this.userService.getByEmail(decoded.email);
+
+      if (!user || user.refreshToken !== refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const newAccessToken = this.generateAccessToken(user.id, user.email);
+      const newRefreshToken = this.generateRefreshToken(user.id, user.email);
+
+      await this.userService.updateUserRefreshToken(user.id, newRefreshToken);
+
+      res.cookie('jwt', newRefreshToken, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      return res.json({
+        accessToken: newAccessToken,
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Failed to refresh access token');
+    }
   }
 
   private generateAccessToken(id: number, email: string): string {
