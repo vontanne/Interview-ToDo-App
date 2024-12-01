@@ -8,14 +8,29 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  todos     Todo[]    @relation("UserTodos")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Todo {
-  id        Int     @id @default(autoincrement())
-  title     String
-  completed Boolean @default(false)
-  userId    Int
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?   // Optional description for the TODO
+  status      TodoStatus @default(PENDING)
+  priority    Int       @default(1) // Priority levels (e.g., 1 = Low, 2 = Medium, 3 = High)
+  userId      Int
+  user        User      @relation("UserTodos", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
+
+enum TodoStatus {
+  PENDING
+  COMPLETED
+  IN_PROGRESS
+}
+
