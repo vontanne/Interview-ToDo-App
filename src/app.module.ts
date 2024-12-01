@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth.module';
-import { TodosModule } from './todos.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { TodosModule } from './modules/todo/todos.module';
 import { ConfigModule } from '@nestjs/config';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    UserModule,
   ],
   providers: [],
 })
