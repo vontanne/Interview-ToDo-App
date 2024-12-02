@@ -27,8 +27,4 @@ export class TodoDto {
   @Min(1)
   @Max(3)
   priority?: number;
-
-  @IsNotEmpty()
-  @IsInt()
-  userId: number;
 }
