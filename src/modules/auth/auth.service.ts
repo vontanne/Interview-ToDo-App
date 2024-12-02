@@ -14,61 +14,71 @@ export class AuthService {
     private userService: UserService,
   ) {}
 
-  async register(authDto: AuthDto, res: Response) {
-    const { email, password } = authDto;
-    const { SALT } = AUTH_CONFIG;
-    const hashedPassword = await bcrypt.hash(password, SALT);
+  async register(authDto: AuthDto, res: Response): Promise<Response> {
+    try {
+      const { email, password } = authDto;
+      const { SALT } = AUTH_CONFIG;
 
-    const newUser = await this.userService.create(email, hashedPassword);
-    const { id } = newUser;
+      const hashedPassword = await bcrypt.hash(password, SALT);
+      const newUser = await this.userService.create(email, hashedPassword);
 
-    const accessToken = this.generateAccessToken(id, email);
-    const refreshToken = this.generateRefreshToken(id, email);
+      const { id } = newUser;
+      const accessToken = this.generateAccessToken(id, email);
+      const refreshToken = this.generateRefreshToken(id, email);
 
-    await this.userService.updateUserRefreshToken(id, refreshToken);
+      await this.userService.updateUserRefreshToken(id, refreshToken);
 
-    res.cookie('jwt', refreshToken, {
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+      this.setCookie(res, refreshToken);
 
-    return res.json({ accessToken, newUser });
-  }
-
-  async login(authDto: AuthDto, res: Response) {
-    const { email, password } = authDto;
-    const user = await this.userService.getByEmail(email);
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials');
+      return res.json({ accessToken, newUser });
+    } catch (ex) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message:
+          'An error occurred during registration. Please try again later.',
+      });
     }
-
-    const { id } = user;
-    const accessToken = this.generateAccessToken(id, email);
-    const refreshToken = this.generateRefreshToken(id, email);
-
-    await this.userService.updateUserRefreshToken(id, refreshToken);
-
-    res.cookie('jwt', refreshToken, {
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    return res.json({ accessToken, user });
   }
 
-  async logout(user: UserPayload, res: Response) {
+  async login(authDto: AuthDto, res: Response): Promise<Response> {
+    try {
+      const { email, password } = authDto;
+
+      const user = await this.userService.getByEmail(email);
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json({ message: 'Invalid credentials' });
+      }
+
+      const { id } = user;
+      const accessToken = this.generateAccessToken(id, email);
+      const refreshToken = this.generateRefreshToken(id, email);
+
+      await this.userService.updateUserRefreshToken(id, refreshToken);
+
+      this.setCookie(res, refreshToken);
+
+      return res.json({ accessToken, user });
+    } catch (ex) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'An error occurred during login. Please try again later.',
+      });
+    }
+  }
+
+  async logout(user: UserPayload, res: Response): Promise<Response> {
     try {
       await this.userService.updateUserRefreshToken(user.id, null);
       res.clearCookie('jwt');
       return res.status(HttpStatus.OK).json({ message: 'Sign-out successful' });
-    } catch (error) {
+    } catch (ex) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: 'An error occurred during logout. Please try again later.',
       });
     }
   }
 
-  async refreshAccessToken(req: Request, res: Response) {
+  async refreshAccessToken(req: Request, res: Response): Promise<Response> {
     const refreshToken = req.cookies['jwt'];
     const { REFRESH_TOKEN_SECRET } = AUTH_CONFIG;
 
@@ -78,11 +88,10 @@ export class AuthService {
 
     try {
       const decoded = this.jwtService.verify(refreshToken, {
-        secret: process.env.REFRESH_TOKEN_SECRET,
+        secret: REFRESH_TOKEN_SECRET,
       });
 
       const user = await this.userService.getByEmail(decoded.email);
-
       if (!user || user.refreshToken !== refreshToken) {
         throw new UnauthorizedException('Invalid refresh token');
       }
@@ -92,34 +101,42 @@ export class AuthService {
 
       await this.userService.updateUserRefreshToken(user.id, newRefreshToken);
 
-      res.cookie('jwt', newRefreshToken, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      });
+      this.setCookie(res, newRefreshToken);
 
-      return res.json({
-        accessToken: newAccessToken,
+      return res.json({ accessToken: newAccessToken });
+    } catch (ex) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to refresh access token.',
       });
-    } catch (error) {
-      throw new UnauthorizedException('Failed to refresh access token');
     }
   }
 
   private generateAccessToken(id: number, email: string): string {
     const { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } = AUTH_CONFIG;
-    const accessToken = this.jwtService.sign(
+    return this.jwtService.sign(
       { id, email },
-      { secret: ACCESS_TOKEN_SECRET, expiresIn: ACCESS_TOKEN_EXPIRATION },
+      {
+        secret: ACCESS_TOKEN_SECRET,
+        expiresIn: ACCESS_TOKEN_EXPIRATION,
+      },
     );
-    return accessToken;
   }
 
   private generateRefreshToken(id: number, email: string): string {
     const { REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRATION } = AUTH_CONFIG;
-    const refreshToken = this.jwtService.sign(
+    return this.jwtService.sign(
       { id, email },
-      { secret: REFRESH_TOKEN_SECRET, expiresIn: REFRESH_TOKEN_EXPIRATION },
+      {
+        secret: REFRESH_TOKEN_SECRET,
+        expiresIn: REFRESH_TOKEN_EXPIRATION,
+      },
     );
-    return refreshToken;
+  }
+
+  private setCookie(res: Response, token: string): void {
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
   }
 }
