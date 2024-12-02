@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AUTH_CONFIG } from '../../configs/jwt.config';
 import { UserService } from '../user/user.service';
 import { TUserPayload } from 'src/types/user-payload.type';
+import { sanitizeUser } from 'src/common/helpers/sanitize-user';
 
 @Injectable()
 export class AuthService {
@@ -58,7 +59,9 @@ export class AuthService {
 
       this.setCookie(res, refreshToken);
 
-      return res.json({ accessToken, user });
+      const sanitizedUser = sanitizeUser(user);
+
+      return res.json({ accessToken, user: sanitizedUser });
     } catch (ex) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: 'An error occurred during login. Please try again later.',
