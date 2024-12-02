@@ -1,31 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { sanitizeUser } from 'src/common/helpers/sanitize-user';
 import { UserDto } from './dto/user.dto';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async getByEmail(email: string): Promise<User> {
-    return await this.prisma.user.findUnique({ where: { email } });
+    try {
+      return await this.prisma.user.findUnique({ where: { email } });
+    } catch (ex) {
+      throw new InternalServerErrorException('Failed to find user by email');
+    }
   }
 
   async create(email: string, hashedPassword: string): Promise<UserDto> {
-    const newUser = await this.prisma.user.create({
-      data: { email, password: hashedPassword },
-    });
-    return sanitizeUser(newUser);
+    try {
+      const newUser = await this.prisma.user.create({
+        data: { email, password: hashedPassword },
+      });
+      return sanitizeUser(newUser);
+    } catch (ex) {
+      if (
+        ex instanceof Prisma.PrismaClientKnownRequestError &&
+        ex.code === 'P2002'
+      ) {
+        throw new BadRequestException('Email address already registered');
+      }
+
+      throw new InternalServerErrorException('Failed to create user');
+    }
   }
 
   async updateUserRefreshToken(
     id: number,
     refreshToken: string,
   ): Promise<void> {
-    await this.prisma.user.update({
-      where: { id },
-      data: { refreshToken },
-    });
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data: { refreshToken },
+      });
+    } catch (ex) {
+      throw new InternalServerErrorException(
+        'Failed to update user refresh token',
+      );
+    }
   }
 }
