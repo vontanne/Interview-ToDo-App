@@ -6,13 +6,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { sanitizeUser } from 'src/common/helpers/sanitize-user';
 import { UserDto } from './dto/user.dto';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { TUser } from 'src/types/user.type';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async getByEmail(email: string): Promise<User> {
+  async getByEmail(email: string): Promise<TUser> {
     try {
       return await this.prisma.user.findUnique({ where: { email } });
     } catch (ex) {

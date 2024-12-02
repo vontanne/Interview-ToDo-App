@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TodoDto } from './dto/todo.dto';
 import { TodoOptionsDto } from './dto/todo-options.dto';
 import { Todo } from '@prisma/client';
-import { PaginatedTodosResponse } from 'src/types/todo-list.type';
+import { TPaginatedTodosResponse } from 'src/types/todos-response.type';
 
 @Injectable()
 export class TodosService {
@@ -18,7 +18,7 @@ export class TodosService {
   async getAll(
     userId: number,
     options: TodoOptionsDto,
-  ): Promise<PaginatedTodosResponse> {
+  ): Promise<TPaginatedTodosResponse> {
     const { status, priority, page = 1, limit = 10 } = options;
     const where: Partial<Todo> = { userId };
 
@@ -36,6 +36,6 @@ export class TodosService {
     return {
       todos,
       totalCount,
-    } as PaginatedTodosResponse;
+    } as TPaginatedTodosResponse;
   }
 }

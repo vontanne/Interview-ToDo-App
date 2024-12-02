@@ -1,4 +1,4 @@
-export type UserPayload = {
+export type TUserPayload = {
   id: number;
   email: string;
 };

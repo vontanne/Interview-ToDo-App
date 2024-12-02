@@ -3,7 +3,7 @@ import { TodosService } from './todos.service';
 import { TodoDto } from './dto/todo.dto';
 import { TodoOptionsDto } from './dto/todo-options.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { UserPayload } from 'src/types/user-payload.type';
+import { TUserPayload } from 'src/types/user-payload.type';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
@@ -16,7 +16,7 @@ export class TodosController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new todo item' })
-  async create(@CurrentUser() user: UserPayload, @Body() todoDto: TodoDto) {
+  async create(@CurrentUser() user: TUserPayload, @Body() todoDto: TodoDto) {
     const { id: userId } = user;
     return this.todosService.createTodo(userId, todoDto);
   }
@@ -24,7 +24,7 @@ export class TodosController {
   @Get()
   @ApiOperation({ summary: 'Get todos with filtering and pagination' })
   async getAll(
-    @CurrentUser() user: UserPayload,
+    @CurrentUser() user: TUserPayload,
     @Query() query: TodoOptionsDto,
   ) {
     const { id: userId } = user;

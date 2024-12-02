@@ -5,7 +5,7 @@ import { AuthDto } from './dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { AUTH_CONFIG } from '../../configs/jwt.config';
 import { UserService } from '../user/user.service';
-import { UserPayload } from 'src/types/user-payload.type';
+import { TUserPayload } from 'src/types/user-payload.type';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +66,7 @@ export class AuthService {
     }
   }
 
-  async logout(user: UserPayload, res: Response): Promise<Response> {
+  async logout(user: TUserPayload, res: Response): Promise<Response> {
     try {
       await this.userService.updateUserRefreshToken(user.id, null);
       res.clearCookie('jwt');
