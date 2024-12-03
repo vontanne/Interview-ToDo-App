@@ -9,6 +9,7 @@ import { TodoOptionsDto } from './dto/todo-options.dto';
 import { TPaginatedTodosResponse } from 'src/types/todos-response.type';
 import { UpdateTodoStatusDto } from './dto/update-todo-status.dto';
 import { TTodo } from 'src/types/todo.type';
+import { UpdateTodoDto } from './dto/update-todo.dto';
 
 @Injectable()
 export class TodosService {
@@ -82,6 +83,34 @@ export class TodosService {
 
       throw new InternalServerErrorException(
         `An error occurred while updating the todo status.`,
+      );
+    }
+  }
+
+  async updateTodoFields(
+    todoId: number,
+    updateTodoDto: UpdateTodoDto,
+  ): Promise<TTodo> {
+    try {
+      const todo = await this.prisma.todo.findUnique({
+        where: { id: todoId },
+      });
+
+      if (!todo) {
+        throw new NotFoundException(`Todo with ID ${todoId} not found.`);
+      }
+
+      return await this.prisma.todo.update({
+        where: { id: todoId },
+        data: { ...updateTodoDto },
+      });
+    } catch (ex) {
+      if (ex instanceof NotFoundException) {
+        throw ex;
+      }
+
+      throw new InternalServerErrorException(
+        'An error occurred while updating the todo.',
       );
     }
   }

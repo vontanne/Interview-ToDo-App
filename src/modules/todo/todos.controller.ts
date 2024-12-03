@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { UpdateTodoStatusDto } from './dto/update-todo-status.dto';
 import { TTodo } from 'src/types/todo.type';
+import { UpdateTodoDto } from './dto/update-todo.dto';
 
 @ApiTags('todos')
 @ApiBearerAuth()
@@ -66,5 +67,14 @@ export class TodosController {
     @Body() updateTodoStatusDto: UpdateTodoStatusDto,
   ): Promise<TTodo> {
     return this.todosService.changeStatus(id, updateTodoStatusDto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update todo fields' })
+  async updateTodo(
+    @Param('id') id: number,
+    @Body() updateTodoDto: UpdateTodoDto,
+  ): Promise<TTodo> {
+    return this.todosService.updateTodoFields(id, updateTodoDto);
   }
 }
