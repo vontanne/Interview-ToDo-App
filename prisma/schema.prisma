@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
-  password    String
+  id           Int       @id @default(autoincrement())
+  fullName     String
+  email        String    @unique
+  password     String
   refreshToken String? 
-  todos       Todo[]    @relation("UserTodos")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  todos        Todo[]    @relation("UserTodos")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Todo {
