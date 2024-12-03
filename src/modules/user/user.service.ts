@@ -21,10 +21,14 @@ export class UserService {
     }
   }
 
-  async create(email: string, hashedPassword: string): Promise<UserDto> {
+  async create(
+    fullName: string,
+    email: string,
+    hashedPassword: string,
+  ): Promise<UserDto> {
     try {
       const newUser = await this.prisma.user.create({
-        data: { email, password: hashedPassword },
+        data: { fullName, email, password: hashedPassword },
       });
       return sanitizeUser(newUser);
     } catch (ex) {

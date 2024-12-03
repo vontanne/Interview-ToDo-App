@@ -1,12 +1,13 @@
 import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
-import { AuthDto } from './dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { AUTH_CONFIG } from '../../configs/jwt.config';
 import { UserService } from '../user/user.service';
 import { TUserPayload } from 'src/types/user-payload.type';
 import { sanitizeUser } from 'src/common/helpers/sanitize-user';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,13 +16,17 @@ export class AuthService {
     private userService: UserService,
   ) {}
 
-  async register(authDto: AuthDto, res: Response): Promise<Response> {
+  async register(registerDto: RegisterDto, res: Response): Promise<Response> {
     try {
-      const { email, password } = authDto;
+      const { fullName, email, password } = registerDto;
       const { SALT } = AUTH_CONFIG;
 
       const hashedPassword = await bcrypt.hash(password, SALT);
-      const newUser = await this.userService.create(email, hashedPassword);
+      const newUser = await this.userService.create(
+        fullName,
+        email,
+        hashedPassword,
+      );
 
       const { id } = newUser;
       const accessToken = this.generateAccessToken(id, email);
@@ -40,9 +45,9 @@ export class AuthService {
     }
   }
 
-  async login(authDto: AuthDto, res: Response): Promise<Response> {
+  async login(loginDto: LoginDto, res: Response): Promise<Response> {
     try {
-      const { email, password } = authDto;
+      const { email, password } = loginDto;
 
       const user = await this.userService.getByEmail(email);
       if (!user || !(await bcrypt.compare(password, user.password))) {
