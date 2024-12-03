@@ -1,15 +1,20 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TodoDto } from './dto/todo.dto';
 import { TodoOptionsDto } from './dto/todo-options.dto';
-import { Todo } from '@prisma/client';
 import { TPaginatedTodosResponse } from 'src/types/todos-response.type';
+import { UpdateTodoStatusDto } from './dto/update-todo-status.dto';
+import { TTodo } from 'src/types/todo.type';
 
 @Injectable()
 export class TodosService {
   constructor(private prisma: PrismaService) {}
 
-  async createTodo(userId: number, createTodo: TodoDto): Promise<Todo> {
+  async createTodo(userId: number, createTodo: TodoDto): Promise<TTodo> {
     try {
       return await this.prisma.todo.create({
         data: { userId, ...createTodo },
@@ -27,7 +32,7 @@ export class TodosService {
   ): Promise<TPaginatedTodosResponse> {
     try {
       const { status, priority, page = 1, limit = 10 } = options;
-      const where: Partial<Todo> = { userId };
+      const where: Partial<TTodo> = { userId };
 
       if (status) where.status = status;
       if (priority) where.priority = priority;
@@ -47,6 +52,36 @@ export class TodosService {
     } catch (ex) {
       throw new InternalServerErrorException(
         `An error occurred while retrieving todos`,
+      );
+    }
+  }
+
+  async changeStatus(
+    todoId: number,
+    updateTodoStatusDto: UpdateTodoStatusDto,
+  ): Promise<TTodo> {
+    const { status } = updateTodoStatusDto;
+
+    try {
+      const todo = await this.prisma.todo.findUnique({
+        where: { id: todoId },
+      });
+
+      if (!todo) {
+        throw new NotFoundException(`Todo with ID ${todoId} not found.`);
+      }
+
+      return await this.prisma.todo.update({
+        where: { id: todoId },
+        data: { status },
+      });
+    } catch (ex) {
+      if (ex instanceof NotFoundException) {
+        throw ex;
+      }
+
+      throw new InternalServerErrorException(
+        `An error occurred while updating the todo status.`,
       );
     }
   }
