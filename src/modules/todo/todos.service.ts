@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -58,26 +59,21 @@ export class TodosService {
   }
 
   async changeStatus(
+    userId: number,
     todoId: number,
     updateTodoStatusDto: UpdateTodoStatusDto,
   ): Promise<TTodo> {
     const { status } = updateTodoStatusDto;
 
     try {
-      const todo = await this.prisma.todo.findUnique({
-        where: { id: todoId },
-      });
-
-      if (!todo) {
-        throw new NotFoundException(`Todo with ID ${todoId} not found.`);
-      }
+      await this.validateTodo(userId, todoId);
 
       return await this.prisma.todo.update({
         where: { id: todoId },
         data: { status },
       });
     } catch (ex) {
-      if (ex instanceof NotFoundException) {
+      if (ex instanceof NotFoundException || ex instanceof ForbiddenException) {
         throw ex;
       }
 
@@ -88,29 +84,58 @@ export class TodosService {
   }
 
   async updateTodoFields(
+    userId: number,
     todoId: number,
     updateTodoDto: UpdateTodoDto,
   ): Promise<TTodo> {
     try {
-      const todo = await this.prisma.todo.findUnique({
-        where: { id: todoId },
-      });
-
-      if (!todo) {
-        throw new NotFoundException(`Todo with ID ${todoId} not found.`);
-      }
+      await this.validateTodo(userId, todoId);
 
       return await this.prisma.todo.update({
         where: { id: todoId },
         data: { ...updateTodoDto },
       });
     } catch (ex) {
-      if (ex instanceof NotFoundException) {
+      if (ex instanceof NotFoundException || ex instanceof ForbiddenException) {
         throw ex;
       }
 
       throw new InternalServerErrorException(
         'An error occurred while updating the todo.',
+      );
+    }
+  }
+
+  async deleteTodo(userId: number, todoId: number): Promise<void> {
+    try {
+      await this.validateTodo(userId, todoId);
+
+      await this.prisma.todo.delete({
+        where: { id: todoId },
+      });
+    } catch (ex) {
+      if (ex instanceof NotFoundException || ex instanceof ForbiddenException) {
+        throw ex;
+      }
+
+      throw new InternalServerErrorException(
+        'An error occurred while deleting the todo.',
+      );
+    }
+  }
+
+  private async validateTodo(userId: number, todoId: number): Promise<void> {
+    const todo = await this.prisma.todo.findUnique({
+      where: { id: todoId },
+    });
+
+    if (!todo) {
+      throw new NotFoundException(`Todo with ID ${todoId} not found.`);
+    }
+
+    if (userId !== todo.userId) {
+      throw new ForbiddenException(
+        `You do not have permission to access this todo.`,
       );
     }
   }

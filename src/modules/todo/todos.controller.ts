@@ -7,6 +7,9 @@ import {
   UseGuards,
   Param,
   Patch,
+  ParseIntPipe,
+  Delete,
+  HttpCode,
 } from '@nestjs/common';
 import { TodosService } from './todos.service';
 import { TodoDto } from './dto/todo.dto';
@@ -63,18 +66,64 @@ export class TodosController {
     description: 'An error occurred while updating the todo status.',
   })
   async changeStatus(
-    @Param('id') id: number,
+    @CurrentUser() user: TUserPayload,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateTodoStatusDto: UpdateTodoStatusDto,
   ): Promise<TTodo> {
-    return this.todosService.changeStatus(id, updateTodoStatusDto);
+    const { id: userId } = user;
+    return this.todosService.changeStatus(userId, id, updateTodoStatusDto);
   }
-
   @Patch(':id')
-  @ApiOperation({ summary: 'Update todo fields' })
+  @ApiOperation({ summary: 'Update specific fields of a todo item' })
+  @ApiResponse({
+    status: 200,
+    description: 'The todo was successfully updated.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Todo not found.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'You do not have permission to update this todo.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'An error occurred while updating the todo.',
+  })
   async updateTodo(
-    @Param('id') id: number,
+    @CurrentUser() user: TUserPayload,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateTodoDto: UpdateTodoDto,
   ): Promise<TTodo> {
-    return this.todosService.updateTodoFields(id, updateTodoDto);
+    const { id: userId } = user;
+    return this.todosService.updateTodoFields(userId, id, updateTodoDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Delete a todo item' })
+  @ApiResponse({
+    status: 204,
+    description: 'The todo was successfully deleted.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Todo not found.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'You do not have permission to delete this todo.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'An error occurred while deleting the todo.',
+  })
+  async deleteTodo(
+    @CurrentUser() user: TUserPayload,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
+    const { id: userId } = user;
+    await this.todosService.deleteTodo(userId, id);
   }
 }

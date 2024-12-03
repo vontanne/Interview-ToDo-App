@@ -1,4 +1,10 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -38,6 +44,14 @@ export class AuthService {
 
       return res.json({ accessToken, newUser });
     } catch (ex) {
+      if (ex instanceof ConflictException) {
+        return res.status(HttpStatus.CONFLICT).json({ message: ex.message });
+      }
+
+      if (ex instanceof BadRequestException) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: ex.message });
+      }
+
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message:
           'An error occurred during registration. Please try again later.',

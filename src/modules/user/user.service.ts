@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -36,7 +37,11 @@ export class UserService {
         ex instanceof Prisma.PrismaClientKnownRequestError &&
         ex.code === 'P2002'
       ) {
-        throw new BadRequestException('Email address already registered');
+        throw new ConflictException('Email address already registered');
+      }
+
+      if (ex instanceof Prisma.PrismaClientValidationError) {
+        throw new BadRequestException(`Validation error`);
       }
 
       throw new InternalServerErrorException('Failed to create user');
