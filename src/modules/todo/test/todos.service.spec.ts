@@ -158,6 +158,44 @@ describe('TodosService', () => {
       });
     });
 
+    it('should handle multiple filters', async () => {
+      const options: TodoOptionsDto = {
+        status: TodoStatusEnum.PENDING,
+        priority: 1,
+        page: 1,
+        limit: 5,
+      };
+
+      mockPrismaService.todo.findMany.mockResolvedValue([mockTodo]);
+      mockPrismaService.todo.count.mockResolvedValue(1);
+
+      const result = await todosService.getAll(1, options);
+
+      expect(result.todos).toEqual([mockTodo]);
+      expect(prismaService.todo.findMany).toHaveBeenCalledWith({
+        where: { userId: 1, status: TodoStatusEnum.PENDING, priority: 1 },
+        skip: 0,
+        take: 5,
+      });
+    });
+
+    it('should apply default pagination values if not provided', async () => {
+      const options: TodoOptionsDto = {};
+
+      mockPrismaService.todo.findMany.mockResolvedValue([mockTodo]);
+      mockPrismaService.todo.count.mockResolvedValue(1);
+
+      const result = await todosService.getAll(1, options);
+
+      expect(result.todos).toEqual([mockTodo]);
+      expect(result.totalCount).toBe(1);
+      expect(prismaService.todo.findMany).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        skip: 0,
+        take: 10,
+      });
+    });
+
     it('should throw InternalServerErrorException on Prisma error', async () => {
       mockPrismaService.todo.findMany.mockRejectedValue(
         new Error('Prisma Error'),
@@ -207,6 +245,38 @@ describe('TodosService', () => {
       await expect(
         todosService.changeStatus(1, 1, {} as UpdateTodoStatusDto),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('deleteTodo', () => {
+    it('should delete a todo', async () => {
+      mockPrismaService.todo.findUnique.mockResolvedValue(mockTodo);
+      mockPrismaService.todo.delete.mockResolvedValue(undefined);
+
+      await expect(todosService.deleteTodo(1, 1)).resolves.toBeUndefined();
+
+      expect(prismaService.todo.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it('should throw NotFoundException if the todo does not exist', async () => {
+      mockPrismaService.todo.findUnique.mockResolvedValue(null);
+
+      await expect(todosService.deleteTodo(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException if the user does not own the todo', async () => {
+      mockPrismaService.todo.findUnique.mockResolvedValue({
+        ...mockTodo,
+        userId: 2,
+      });
+
+      await expect(todosService.deleteTodo(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
