@@ -1,9 +1,9 @@
 {
   "name": "todo-app",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A simple To-Do app built with NestJS for task management and user authentication",
+  "author": "Rafayel Jamalyan, Hovhannes Hovhannisyan",
+  "private": false,
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
